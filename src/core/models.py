@@ -1,12 +1,23 @@
-from core.utils import get_current_timestamp, get_normalized_symbol
+from dataclasses import dataclass
+
+from core.utils import get_current_timestamp
+
+
+@dataclass(frozen=True)
+class Symbol:
+    base: str
+    quote: str
+
+    def __str__(self) -> str:
+        return f'{self.base}{self.quote}'
 
 
 class TimestampedSymbol:
-    _symbol: str
+    _symbol: Symbol
     _timestamp: int
 
-    def __init__(self, symbol: str, timestamp: int | None = None) -> None:
-        self._symbol = get_normalized_symbol(symbol)
+    def __init__(self, symbol: Symbol, timestamp: int | None = None) -> None:
+        self._symbol = symbol
         self._timestamp = timestamp or get_current_timestamp()
 
     @property
@@ -14,7 +25,7 @@ class TimestampedSymbol:
         return self._timestamp
 
     @property
-    def symbol(self) -> str:
+    def symbol(self) -> Symbol:
         return self._symbol
 
 
@@ -22,7 +33,7 @@ class Price(TimestampedSymbol):
     __value: float
 
     def __init__(
-        self, symbol: str, value: float, timestamp: int | None = None
+        self, symbol: Symbol, value: float, timestamp: int | None = None
     ) -> None:
         super().__init__(symbol, timestamp)
         self.__value = value
@@ -45,7 +56,7 @@ class OrderBook(TimestampedSymbol):
 
     def __init__(
         self,
-        symbol: str,
+        symbol: Symbol,
         bids: list[tuple[float, float]],
         asks: list[tuple[float, float]],
         timestamp: int | None = None,
@@ -80,5 +91,5 @@ class OrderBook(TimestampedSymbol):
         asks_str = to_str(self.asks[:3]) or 'No asks'
         return (
             f'{self.symbol} [ts={self.timestamp}]: '
-            f'bids={bids_str}, asks= {asks_str}'
+            f'bids={bids_str}, asks={asks_str}'
         )

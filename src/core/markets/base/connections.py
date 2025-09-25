@@ -1,14 +1,13 @@
-from typing import Self
+from typing import Any, Self
 
 import aiohttp
+from aiohttp import ClientError, ClientResponseError
 
 
 class AiohttpConnection:
     """Asynchronous HTTP connection manager.
 
-    Inherit this class and use it as context manager:
-        async with self.session.get(url) as response:
-            return await response.json()
+    Inherit this class and use _fetch_json method.
     """
 
     def __init__(self) -> None:
@@ -30,3 +29,21 @@ class AiohttpConnection:
         if not self._session:
             raise RuntimeError('ClientSession is not initialized')
         return self._session
+
+    async def _fetch_json(
+        self, url: str, params: dict[str, str] | None = None
+    ) -> dict[str, Any]:
+        try:
+            async with self.session.get(url, params=params) as response:
+                response.raise_for_status()
+                data: dict[str, Any] = await response.json()
+                if not data:
+                    raise RuntimeError('Empty response')
+                return data
+        except ClientResponseError as e:
+            raise RuntimeError(
+                f'HTTP{e.status} ({e.message}) at '
+                f'{url} with params {params}'
+            ) from e
+        except ClientError as e:
+            raise RuntimeError(f'Client error: {e}') from e
