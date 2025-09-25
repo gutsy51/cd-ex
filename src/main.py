@@ -2,7 +2,7 @@ from core.markets.cex.binance import BinanceData
 
 
 async def main() -> None:
-    symbol = 'BTCUSDDDT'
+    symbol = 'BTCUSDT'
 
     async with BinanceData() as market:
         price = await market.fetch_price(symbol)

@@ -1,12 +1,16 @@
-from abc import ABC, abstractmethod
 from typing import Self
 
 import aiohttp
 
-from core.models.orderbook import OrderBook, Price
 
+class AiohttpConnection:
+    """Asynchronous HTTP connection manager.
 
-class MarketData(ABC):
+    Inherit this class and use it as context manager:
+        async with self.session.get(url) as response:
+            return await response.json()
+    """
+
     def __init__(self) -> None:
         self._session: aiohttp.ClientSession | None = None
 
@@ -26,9 +30,3 @@ class MarketData(ABC):
         if not self._session:
             raise RuntimeError('ClientSession is not initialized')
         return self._session
-
-    @abstractmethod
-    async def fetch_price(self, symbol: str) -> Price: ...
-
-    @abstractmethod
-    async def fetch_orders(self, symbol: str, depth: int = 5) -> OrderBook: ...

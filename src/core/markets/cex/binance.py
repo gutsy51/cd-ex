@@ -2,32 +2,20 @@ from typing import Any
 
 from aiohttp import ClientError, ClientResponseError
 
-from core.markets.marketdata import MarketData
-from core.models.orderbook import OrderBook, Price
+from core.markets.base.connections import AiohttpConnection
+from core.markets.base.marketdata import AsyncMarketData
 
 BINANCE_API = 'https://api.binance.com/api/v3'
 PRICE_URL = f'{BINANCE_API}/ticker/price'
 DEPTH_URL = f'{BINANCE_API}/depth'
 
 
-class BinanceData(MarketData):
-    async def fetch_price(self, symbol: str) -> Price:
-        response = await self.__fetch_price_json(symbol)
-        return Price(symbol, float(response['price']))
-
-    async def fetch_orders(self, symbol: str, depth: int = 5) -> OrderBook:
-        response = await self.__fetch_orders_json(symbol, depth)
-        return OrderBook(
-            symbol=symbol,
-            bids=[(float(p), float(q)) for p, q in response.get('bids', [])],
-            asks=[(float(p), float(q)) for p, q in response.get('asks', [])],
-        )
-
-    async def __fetch_price_json(self, symbol: str) -> dict[str, str]:
+class BinanceData(AiohttpConnection, AsyncMarketData):
+    async def _fetch_price_json(self, symbol: str) -> dict[str, str]:
         params = {'symbol': symbol}
         return await self.__fetch_json(PRICE_URL, params)
 
-    async def __fetch_orders_json(
+    async def _fetch_orders_json(
         self, symbol: str, depth: int
     ) -> dict[str, list[tuple[str, str]]]:
         params = {'symbol': symbol, 'limit': str(depth)}
