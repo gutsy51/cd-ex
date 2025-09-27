@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from core.models import OrderBook, Price, Symbol
+from core.markets.models import OrderBook, Price, Symbol
 
 
 class MarketData(ABC):

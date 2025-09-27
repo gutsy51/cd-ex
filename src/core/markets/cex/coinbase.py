@@ -1,7 +1,8 @@
 from core.markets.base.connections import AiohttpConnection
 from core.markets.base.marketdata import MarketData
-from core.models import OrderBook, Price, Symbol
-from core.utils import parse_iso8601_to_timestamp
+from core.markets.models import OrderBook, Price, Symbol
+from core.markets.utils.orderbook import raw_list_to_orders_tuple
+from core.markets.utils.timestamp import parse_iso8601_to_timestamp
 
 COINBASE_API = 'https://api.exchange.coinbase.com'
 PRICE_URL = f'{COINBASE_API}/products/{{symbol}}/ticker'
@@ -24,8 +25,8 @@ class CoinbaseData(AiohttpConnection, MarketData):
         raw = await self._fetch_json(url, params=params)
         return OrderBook(
             symbol=symbol,
-            bids=[(float(p), float(q)) for p, q, *_ in raw['bids'][:depth]],
-            asks=[(float(p), float(q)) for p, q, *_ in raw['asks'][:depth]],
+            bids=raw_list_to_orders_tuple(raw['bids'][:depth]),
+            asks=raw_list_to_orders_tuple(raw['asks'][:depth]),
             timestamp=parse_iso8601_to_timestamp(raw['time']),
         )
 

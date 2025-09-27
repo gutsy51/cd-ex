@@ -1,23 +1,28 @@
 from core.markets.cex.binance import BinanceData
 from core.markets.cex.bybit import ByBitData
 from core.markets.cex.coinbase import CoinbaseData
-from core.models import Symbol
+from core.markets.models import OrderBook, Price, Symbol
+
+
+async def try_fetch(
+    market: BinanceData | ByBitData | CoinbaseData, symbol: Symbol
+) -> tuple[Price | None, OrderBook | None]:
+    try:
+        async with market as _market:
+            price = await _market.fetch_price(symbol)
+            orderbook = await _market.fetch_orders(symbol, 100)
+        return price, orderbook
+    except RuntimeError as e:
+        print(e)
+        return None, None
 
 
 async def main() -> None:
-    symbol = Symbol('BTC', 'USDT')
+    symbol = Symbol('XRP', 'USDT')
 
-    async with BinanceData() as market:
-        binance_price = await market.fetch_price(symbol)
-        binance_orderbook = await market.fetch_orders(symbol)
-
-    async with ByBitData() as market:
-        bybit_price = await market.fetch_price(symbol)
-        bybit_orderbook = await market.fetch_orders(symbol)
-
-    async with CoinbaseData() as market:
-        coinbase_price = await market.fetch_price(symbol)
-        coinbase_orderbook = await market.fetch_orders(symbol)
+    binance_price, binance_orderbook = await try_fetch(BinanceData(), symbol)
+    bybit_price, bybit_orderbook = await try_fetch(ByBitData(), symbol)
+    coinbase_price, coinbase_orderbook = await try_fetch(CoinbaseData(), symbol)
 
     print(f'[ Binance] {binance_price}')
     print(f'[   ByBit] {bybit_price}')

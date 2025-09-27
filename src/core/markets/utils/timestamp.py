@@ -15,7 +15,3 @@ def parse_iso8601_to_timestamp(time_str: str) -> int:
 
     dt = datetime.strptime(time_str, "%Y-%m-%dT%H:%M:%S.%fZ")
     return int(dt.timestamp() * 1000)
-
-
-def get_normalized_symbol(symbol: str) -> str:
-    return symbol.strip().upper()

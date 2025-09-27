@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from core.utils import get_current_timestamp
+from core.markets.utils.timestamp import get_current_timestamp
 
 
 @dataclass(frozen=True)
@@ -47,18 +47,27 @@ class Price(TimestampedSymbol):
         self._timestamp = timestamp or get_current_timestamp()
 
     def __str__(self) -> str:
-        return f'{self.symbol} [ts={self.timestamp}]: price={self.value}'
+        return f'{self.symbol} [ts={self.timestamp}]: price={self.__value}'
+
+
+@dataclass(frozen=True)
+class Order:
+    price: float
+    quantity: float
+
+    def __str__(self) -> str:
+        return f'({self.price}, {self.quantity})'
 
 
 class OrderBook(TimestampedSymbol):
-    __bids: list[tuple[float, float]]
-    __asks: list[tuple[float, float]]
+    __bids: tuple[Order, ...]
+    __asks: tuple[Order, ...]
 
     def __init__(
         self,
         symbol: Symbol,
-        bids: list[tuple[float, float]],
-        asks: list[tuple[float, float]],
+        bids: tuple[Order, ...],
+        asks: tuple[Order, ...],
         timestamp: int | None = None,
     ) -> None:
         super().__init__(symbol, timestamp)
@@ -66,17 +75,23 @@ class OrderBook(TimestampedSymbol):
         self.__asks = asks
 
     @property
-    def bids(self) -> list[tuple[float, float]]:
-        return self.__bids.copy()
+    def bids(self) -> tuple[Order, ...]:
+        return self.__bids
 
     @property
-    def asks(self) -> list[tuple[float, float]]:
-        return self.__asks.copy()
+    def asks(self) -> tuple[Order, ...]:
+        return self.__asks
+
+    def get_best_bid(self) -> Order | None:
+        return self.__bids[0] if self.__bids else None
+
+    def get_best_ask(self) -> Order | None:
+        return self.__asks[0] if self.__asks else None
 
     def update(
         self,
-        bids: list[tuple[float, float]],
-        asks: list[tuple[float, float]],
+        bids: tuple[Order, ...],
+        asks: tuple[Order, ...],
         timestamp: int | None = None,
     ) -> None:
         self.__bids = bids
@@ -84,11 +99,11 @@ class OrderBook(TimestampedSymbol):
         self._timestamp = timestamp or get_current_timestamp()
 
     def __str__(self) -> str:
-        def to_str(x: list[tuple[float, float]]) -> str:
-            return ', '.join(f'({p:.2f}, {q:.4f})' for p, q in x)
+        def to_str(x: tuple[Order, ...]) -> str:
+            return ', '.join(f'{order}' for order in x)
 
-        bids_str = to_str(self.bids[:3]) or 'No bids'
-        asks_str = to_str(self.asks[:3]) or 'No asks'
+        bids_str = to_str(self.__bids[:3]) or 'No bids'
+        asks_str = to_str(self.__asks[:3]) or 'No asks'
         return (
             f'{self.symbol} [ts={self.timestamp}]: '
             f'bids={bids_str}, asks={asks_str}'

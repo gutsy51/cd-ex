@@ -1,6 +1,7 @@
 from core.markets.base.connections import AiohttpConnection
 from core.markets.base.marketdata import MarketData
-from core.models import OrderBook, Price, Symbol
+from core.markets.models import OrderBook, Price, Symbol
+from core.markets.utils.orderbook import raw_list_to_orders_tuple
 
 BYBIT_API = 'https://api.bybit.com/v5'
 PRICE_URL = f'{BYBIT_API}/market/tickers'
@@ -26,7 +27,7 @@ class ByBitData(AiohttpConnection, MarketData):
         raw = await self._fetch_json(ORDERBOOK_URL, params=params)
         return OrderBook(
             symbol=symbol,
-            bids=[(float(p), float(q)) for p, q in raw['result']['b']],
-            asks=[(float(p), float(q)) for p, q in raw['result']['a']],
+            bids=raw_list_to_orders_tuple(raw['result']['b']),
+            asks=raw_list_to_orders_tuple(raw['result']['a']),
             timestamp=int(raw['time']),
         )
